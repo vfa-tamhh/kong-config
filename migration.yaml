@@ -1,0 +1,71 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kong-init
+  namespace: kong
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: kong-init
+        # image: kong:2.4.1-alpine
+        image: kong:latest
+        # image: kong:3.3.1-alpine
+        env:
+        - name: KONG_DATABASE
+          value: "postgres"
+        - name: KONG_PG_HOST
+          value: "10.115.240.5"
+        - name: KONG_PG_PORT
+          value: "5432"
+        - name: KONG_PG_USER
+          value: "kong-user"
+        - name: KONG_PG_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kong-creds
+              key: password
+        - name: KONG_PG_DATABASE
+          value: "kong"
+        # - name: KONG_PG_SSL
+        #   value: "on"
+        # - name: KONG_PG_SSL_VERIFY
+        #   value: "peer"
+        # - name: KONG_PG_SSL_REQUIRED
+        #   value: "on"
+        # - name: PG_SSL_CERT
+        #   value: "/etc/secrets/ssl/postgresql-client-cert"
+        # - name: PG_SSL_CERT_KEY
+        #   value: "/etc/secrets/ssl/postgresql-client-key"
+        # - name: KONG_PG_SSL_MODE
+        #   value: "verify-ca"
+        - name: KONG_LUA_SSL_TRUSTED_CERTIFICATE
+          value: "/etc/secrets/ssl/postgresql-server-ca"
+        command: ["kong", "migrations", "bootstrap"]
+        volumeMounts:
+        - name: kong-ssl-copy  # Volume mount for the copied certs
+          mountPath: /etc/secrets/ssl  # Mount path for the copied certs
+      volumes:
+      - name: kong-ssl
+        secret:
+          secretName: kong-postgres-ssl
+          defaultMode: 0600
+      - name: kong-ssl-copy  # Changed the volume name here
+        emptyDir: {}
+      initContainers:
+      - name: init-cert
+        image: busybox
+        command:
+          - /bin/sh
+          - -c
+          - |
+            cp /kong-ssl/* /etc/secrets/ssl/
+            chmod 640 /etc/secrets/ssl/postgresql-client-key
+            chmod 644 /etc/secrets/ssl/postgresql-server-ca
+            chmod 644 /etc/secrets/ssl/postgresql-client-cert
+        volumeMounts:
+          - name: kong-ssl  # Volume mount for the secret
+            mountPath: /kong-ssl  # Mount path for the secret
+          - name: kong-ssl-copy  # Volume mount for the copied certs
+            mountPath: /etc/secrets/ssl  # Where to copy the certificates

@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: psql-client
+  namespace: kong
+spec:
+  restartPolicy: Never
+  volumes:
+    - name: certs
+      secret:
+        secretName: kong-postgres-ssl
+        defaultMode: 0600
+    - name: certs-copy
+      emptyDir: {}
+  initContainers:
+    - name: init-cert
+      image: busybox
+      command:
+        - /bin/sh
+        - -c
+        - |
+          cp /certs/* /certs-copy/
+          chmod 640 /certs-copy/postgresql-client-key
+          chmod 644 /certs-copy/postgresql-server-ca
+          chmod 644 /certs-copy/postgresql-client-cert
+      volumeMounts:
+        - name: certs
+          mountPath: /certs
+        - name: certs-copy
+          mountPath: /certs-copy
+  containers:
+    - name: psql
+      image: bitnami/postgresql:11
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - name: certs-copy
+          mountPath: /certs
