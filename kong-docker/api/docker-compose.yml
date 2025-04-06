@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  mock-api:
+    image: kennethreitz/httpbin
+    container_name: mock-api
+    ports:
+      - "8080:80"
+    networks:
+      - kong-net
+
+networks:
+  kong-net:
+    external: true

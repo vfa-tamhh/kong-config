@@ -1,0 +1,12 @@
+{
+    "tags": null,
+    "id": "5a54ce8e-e619-48b2-bdfe-beae8797dd9f",
+    "algorithm": "HS256",
+    "created_at": 1743945993,
+    "consumer": {
+        "id": "015304a9-ea7f-46e5-b486-15089bda2662"
+    },
+    "key": "Z2tKh3hUwcM5EH0Uy44Y4OSK6U7L8Rt6",
+    "rsa_public_key": null,
+    "secret": "YeADDQZhD3hu31DuIAVUvTHE8vLdE7RQ"
+}
